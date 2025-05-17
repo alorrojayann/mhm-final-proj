@@ -8,8 +8,8 @@ import joblib
 # loading models
 @st.cache_resource
 def load_models():
-    model_csv = joblib.load('autoencoder.h5')  
-    model_image = tf.keras.models.load_model('autoencoder (85).h5')
+    model_csv = joblib.load('weather_model.h5')  
+    model_image = tf.keras.models.load_model('weather_model.h5')
     return model_csv, model_image
 
 model_csv, model_image = load_models()
