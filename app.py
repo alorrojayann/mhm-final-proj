@@ -12,16 +12,16 @@ import joblib
 # models
 url_1 = "https://drive.google.com/uc?id=1lRFipQVEaMIdoWU1MX8IpdSGqI_cPOZA"
 model_1 = "autoencoder.h5"
-gdown.download(url_1, model_1, quiet=False)
+gdown.download(url_1, model_1, quiet=False, fuzzy=True)
 
 url_2 = "https://drive.google.com/uc?id=1NFRnfxCuT8-BVVgfTTkxhSYqgiQJXqMl"
 model_2 = "custom_dcnn_model.h5"
-gdown.download(url_2, model_2, quiet=False)
+gdown.download(url_2, model_2, quiet=False, fuzzy=True)
 
 # scaler
 url_scaler = "https://drive.google.com/uc?id=10meYS_EO63LtqpH12XgLk_MXEDWhQbHr"
 scaler_file = "scaler.pkl"
-gdown.download(url_scaler, scaler_file, quiet=False)
+gdown.download(url_scaler, scaler_file, quiet=False, fuzzy=True)
 scaler = joblib.load(scaler_file)
 
 # csv preprocessing
