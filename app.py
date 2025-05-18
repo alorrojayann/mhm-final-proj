@@ -19,37 +19,19 @@ gdown.download(url_2, model_2, quiet=False)
 # loading models
 @st.cache_resource
 def load_models():
-    model_csv = tf.keras.models.load_model(model_1, compile=False)  
-    model_image = tf.keras.models.load_model(model_2, compile=False)
+    model_csv = tf.keras.models.load_model(model_1)  
+    model_image = tf.keras.models.load_model(model_2)
     return model_csv, model_image
 
 model_csv, model_image = load_models()
 
-# preprocess csv
-scaler = joblib.load("scaler.pkl")
-
-def preprocess_uploaded_csv(df, downsample_factor=5):
-    time_series = df.values[::downsample_factor]  # downsampled
-    _, _, Zxx = stft(time_series.T, nperseg=64)
-    freq_features = np.abs(Zxx).mean(axis=2).flatten()
-    combined = np.hstack([time_series.flatten(), freq_features])
-    combined_scaled = scaler.transform([combined])  # shape: (1, 400264)
-    return combined_scaled
-
 # csv 
 def predict_csv(input_df):
     if input_df.shape[1] != 8:
-        st.error("CSV must have exactly 8 columns (raw vibration channels).")
+        st.error("CSV must have exactly 8 columns as per model input.")
         return None
-    try:
-        input_data = preprocess_uploaded_csv(input_df)
-        reconstruction = model_csv.predict(input_data)
-        mse = np.mean(np.square(input_data - reconstruction), axis=1)
-        threshold = 0.015  
-        return (mse[0] > threshold)
-    except Exception as e:
-        st.error(f"Prediction failed: {e}")
-        return None
+    prediction = model_csv.predict(input_df)
+    return prediction
 
 # image spectrogram
 def predict_image(img: Image.Image):
