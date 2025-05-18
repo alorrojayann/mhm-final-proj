@@ -3,13 +3,22 @@ import pandas as pd
 import numpy as np
 from PIL import Image
 import tensorflow as tf
-import joblib
+import gdown
+
+# models
+url_1 = "https://drive.google.com/uc?id=1lRFipQVEaMIdoWU1MX8IpdSGqI_cPOZA"
+model_1 = "model.h5"
+gdown.download(url_1, output, quiet=False)
+
+url_1 = "https://drive.google.com/uc?id=1NFRnfxCuT8-BVVgfTTkxhSYqgiQJXqMl"
+model_1 = "model.h5"
+gdown.download(url_1, output, quiet=False)
 
 # loading models
 @st.cache_resource
 def load_models():
-    model_csv = tf.keras.models.load_model('weather_model.h5')  
-    model_image = tf.keras.models.load_model('weather_model.h5')
+    model_csv = tf.keras.models.load_model(model_1)  
+    model_image = tf.keras.models.load_model(model_2)
     return model_csv, model_image
 
 model_csv, model_image = load_models()
