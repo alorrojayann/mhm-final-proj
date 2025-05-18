@@ -7,12 +7,12 @@ import gdown
 
 # models
 url_1 = "https://drive.google.com/uc?id=1lRFipQVEaMIdoWU1MX8IpdSGqI_cPOZA"
-model_1 = "model.h5"
-gdown.download(url_1, output_1, quiet=False)
+model_1 = "autoencoder.h5"
+gdown.download(url_1, model_1, quiet=False)
 
-url_1 = "https://drive.google.com/uc?id=1NFRnfxCuT8-BVVgfTTkxhSYqgiQJXqMl"
-model_1 = "model.h5"
-gdown.download(url_1, output_2, quiet=False)
+url_2 = "https://drive.google.com/uc?id=1NFRnfxCuT8-BVVgfTTkxhSYqgiQJXqMl"
+model_2 = "custom_dcnn_model.h5"
+gdown.download(url_2, model_2, quiet=False)
 
 # loading models
 @st.cache_resource
