@@ -33,10 +33,12 @@ def predict_csv(input_df):
 
 # image spectrogram
 def predict_image(img: Image.Image):
-    img = img.convert('RGB')           
-    img = img.resize((224, 224))    
-    img_array = np.array(img) / 255.0  
-    img_array = np.expand_dims(img_array, axis=0) 
+    img = img.convert('RGB')
+    img = img.resize((224, 224)) 
+    img_array = np.array(img) / 255.0
+    if img_array.ndim == 2: 
+        img_array = np.stack((img_array,)*3, axis=-1)
+    img_array = np.expand_dims(img_array, axis=0)
     prediction = model_image.predict(img_array)
     return (prediction[0][0] > 0.5)
 
