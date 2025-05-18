@@ -4,6 +4,10 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 import gdown
+import os
+import io
+from scipy.signal import stft
+import joblib
 
 # models
 url_1 = "https://drive.google.com/uc?id=1lRFipQVEaMIdoWU1MX8IpdSGqI_cPOZA"
@@ -13,6 +17,31 @@ gdown.download(url_1, model_1, quiet=False)
 url_2 = "https://drive.google.com/uc?id=1NFRnfxCuT8-BVVgfTTkxhSYqgiQJXqMl"
 model_2 = "custom_dcnn_model.h5"
 gdown.download(url_2, model_2, quiet=False)
+
+# scaler
+url_scaler = "https://drive.google.com/uc?id=10meYS_EO63LtqpH12XgLk_MXEDWhQbHr"
+scaler_file = "scaler.pkl"
+gdown.download(url_scaler, scaler_file, quiet=False)
+scaler = joblib.load(scaler_file)
+
+# csv preprocessing
+def preprocess_csv(df, downsample_factor=5):
+    if df.shape[1] != 8:
+        st.error("CSV must have exactly 8 columns.")
+        return None
+
+    # downsample
+    time_series = df.values[::downsample_factor]
+
+    _, _, Zxx = stft(time_series.T, nperseg=64)
+    freq_features = np.abs(Zxx).mean(axis=2).flatten()
+
+    combined = np.hstack([time_series.flatten(), freq_features])
+
+    combined = combined.reshape(1, -1)
+    combined_scaled = scaler.transform(combined)
+
+    return combined_scaled
 
 # loading models
 @st.cache_resource
@@ -25,11 +54,16 @@ model_csv, model_image = load_models()
 
 # csv 
 def predict_csv(input_df):
-    if input_df.shape[1] != 8:
-        st.error("CSV must have exactly 8 columns as per model input.")
+    processed = preprocess_csv(input_df)
+    if processed is None:
         return None
-    prediction = model_csv.predict(input_df)
-    return prediction
+
+    reconstruction = model_csv.predict(processed)
+    mse = np.mean(np.square(processed - reconstruction), axis=1)
+
+    threshold = 0.045960635265101094
+    return (mse > threshold).astype(int)
+
 
 # image spectrogram
 def predict_image(img: Image.Image):
