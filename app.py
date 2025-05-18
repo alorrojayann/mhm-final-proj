@@ -17,8 +17,8 @@ gdown.download(url_2, model_2, quiet=False)
 # loading models
 @st.cache_resource
 def load_models():
-    model_csv = tf.keras.models.load_model(model_1)  
-    model_image = tf.keras.models.load_model(model_2)
+    model_csv = tf.keras.models.load_model(model_1, compile=False)  
+    model_image = tf.keras.models.load_model(model_2, compile=False)
     return model_csv, model_image
 
 model_csv, model_image = load_models()
