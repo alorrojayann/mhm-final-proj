@@ -4,6 +4,8 @@ import numpy as np
 from PIL import Image
 import tensorflow as tf
 import gdown
+from scipy.signal import stft
+import joblib
 
 # models
 url_1 = "https://drive.google.com/uc?id=1lRFipQVEaMIdoWU1MX8IpdSGqI_cPOZA"
@@ -23,13 +25,31 @@ def load_models():
 
 model_csv, model_image = load_models()
 
+# preprocess csv
+scaler = joblib.load("scaler.pkl")
+
+def preprocess_uploaded_csv(df, downsample_factor=5):
+    time_series = df.values[::downsample_factor]  # downsampled
+    _, _, Zxx = stft(time_series.T, nperseg=64)
+    freq_features = np.abs(Zxx).mean(axis=2).flatten()
+    combined = np.hstack([time_series.flatten(), freq_features])
+    combined_scaled = scaler.transform([combined])  # shape: (1, 400264)
+    return combined_scaled
+
 # csv 
 def predict_csv(input_df):
     if input_df.shape[1] != 8:
-        st.error("CSV must have exactly 8 columns as per model input.")
+        st.error("CSV must have exactly 8 columns (raw vibration channels).")
         return None
-    prediction = model_csv.predict(input_df)
-    return prediction
+    try:
+        input_data = preprocess_uploaded_csv(input_df)
+        reconstruction = model_csv.predict(input_data)
+        mse = np.mean(np.square(input_data - reconstruction), axis=1)
+        threshold = 0.015  
+        return (mse[0] > threshold)
+    except Exception as e:
+        st.error(f"Prediction failed: {e}")
+        return None
 
 # image spectrogram
 def predict_image(img: Image.Image):
