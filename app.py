@@ -5,57 +5,54 @@ from PIL import Image
 import tensorflow as tf
 import gdown
 import os
-import joblib
+import io
 from scipy.signal import stft
+import joblib
 
-# URLs for models and scaler
+# models
 url_1 = "https://drive.google.com/uc?id=1RjO6e_fI8NUT6F3zPs12qHYLOxqXIVOe"
-model_1_path = "autoencoder.h5"
+model_1 = "autoencoder.h5"
+gdown.download(url_1, model_1, quiet=False)
 
 url_2 = "https://drive.google.com/uc?id=17jofX6sh8ennWJ_mboLyZxmcvJ2eniod"
-model_2_path = "custom_dcnn_model.h5"
+model_2 = "custom_dcnn_model.h5"
+gdown.download(url_2, model_2, quiet=False)
 
+# scaler
 url_scaler = "https://drive.google.com/uc?id=1VS_8Se0KRqanfxYxTgLFi4fcv_lCEfjQ"
-scaler_path = "scaler.pkl"
+scaler_file = "scaler.pkl"
+gdown.download(url_scaler, scaler_file, quiet=False)
+scaler = joblib.load(scaler_file)
 
-@st.cache_resource
-def download_files():
-    if not os.path.exists(model_1_path):
-        gdown.download(url_1, model_1_path, quiet=False)
-    if not os.path.exists(model_2_path):
-        gdown.download(url_2, model_2_path, quiet=False)
-    if not os.path.exists(scaler_path):
-        gdown.download(url_scaler, scaler_path, quiet=False)
-
-    scaler = joblib.load(scaler_path)
-    return scaler
-
-scaler = download_files()
-
-# CSV preprocessing
+# csv preprocessing
 def preprocess_csv(df, downsample_factor=5):
     if df.shape[1] != 8:
         st.error("CSV must have exactly 8 columns.")
         return None
 
+    # downsample
     time_series = df.values[::downsample_factor]
+
     _, _, Zxx = stft(time_series.T, nperseg=64)
     freq_features = np.abs(Zxx).mean(axis=2).flatten()
 
     combined = np.hstack([time_series.flatten(), freq_features])
+
     combined = combined.reshape(1, -1)
     combined_scaled = scaler.transform(combined)
+
     return combined_scaled
 
+# loading models
 @st.cache_resource
 def load_models():
-    model_csv = tf.keras.models.load_model(model_1_path, compile=False)
-    model_image = tf.keras.models.load_model(model_2_path, compile=False)
+    model_csv = tf.keras.models.load_model(model_1, compile=False)  
+    model_image = tf.keras.models.load_model(model_2, compile=False)
     return model_csv, model_image
 
 model_csv, model_image = load_models()
 
-# CSV prediction
+# csv 
 def predict_csv(input_df):
     processed = preprocess_csv(input_df)
     if processed is None:
@@ -63,21 +60,23 @@ def predict_csv(input_df):
 
     reconstruction = model_csv.predict(processed)
     mse = np.mean(np.square(processed - reconstruction), axis=1)
+
     threshold = 0.045960635265101094
     return (mse > threshold).astype(int)
 
-# Image prediction
+
+# image spectrogram
 def predict_image(img: Image.Image):
     img = img.convert('RGB')
-    img = img.resize((224, 224))
+    img = img.resize((224, 224)) 
     img_array = np.array(img) / 255.0
-    if img_array.ndim == 2:
-        img_array = np.stack((img_array,) * 3, axis=-1)
+    if img_array.ndim == 2: 
+        img_array = np.stack((img_array,)*3, axis=-1)
     img_array = np.expand_dims(img_array, axis=0)
     prediction = model_image.predict(img_array)
     return (prediction[0][0] > 0.5)
 
-# Streamlit UI
+# user interface 
 st.title("Machine Vibration Anomaly Detection")
 st.write("Upload either CSV raw vibration data or an image spectrogram to classify as normal or anomalous.")
 
