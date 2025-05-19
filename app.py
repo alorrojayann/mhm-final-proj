@@ -101,5 +101,5 @@ elif option == 'Spectrogram Image':
         st.image(image, caption='Uploaded Spectrogram', use_column_width=True)
         if st.button("Predict"):
             is_anomalous = predict_image(image)
-            result = 'Anomalous' if is_anomalous else 'Normal'
+            result = 'Faulty' if is_anomalous else 'Healthy'
             st.success(f"Prediction: {result}")
